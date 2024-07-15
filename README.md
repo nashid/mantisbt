@@ -1,103 +1,136 @@
-Mantis Bug Tracker (MantisBT)
-=============================
+# Mantis Bug Tracker (MantisBT) Installation Guide
 
-[![Build Status](https://img.shields.io/travis/com/mantisbt/mantisbt/master?logo=travis)](https://app.travis-ci.com/mantisbt/mantisbt)
-[![Gitter](https://img.shields.io/gitter/room/mantisbt/mantisbt.svg?logo=gitter)](https://gitter.im/mantisbt/mantisbt)
+This guide provides step-by-step instructions to install and set up Mantis Bug Tracker (MantisBT) on macOS, 
+including the configuration of Apache, PHP, and MySQL.
 
-Screenshots
------------
+## Prerequisites
 
-![Screenshot of View Issues page](doc/modern_view_issues.png)
+## Step 1: Install Apache
 
-![Screenshot of My View page](doc/modern_my_view.png)
+```bash
+brew install httpd
+sudo brew services start httpd
+```
 
-![Screenshot of View Issue Details page](doc/modern_view_issue.png)
+## Step 2: Install PHP
 
-Documentation
--------------
+```bash
+brew install php
+```
 
-For complete documentation, please read the administration guide included with
-this release in the `doc/<lang>` directory.  The guide is available in text, PDF,
-and HTML formats.
+## Step 3: Install MySQL
+```bash
+brew install mysql
+sudo brew services start mysql
+```
 
-Requirements
-------------
+## Step 4: Set Up MySQL
+```bash
+mysql -u root -p
+CREATE DATABASE mantisbt CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-* MySQL 5.5.35+, PostgreSQL 9.2+, or other supported database
-* PHP 7.4.0+
-* a webserver (e.g. Apache or IIS)
+CREATE USER 'mantisbt_user'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON mantisbt.* TO 'mantisbt_user'@'localhost';
+FLUSH PRIVILEGES;
+```
 
-Please refer to section 2.2 in the administration guide for further details.
+## Step 4: Set Up MySQL
 
-Installation
-------------
+- Clone MantisBT Repository
 
-* Extract the tarball into a location readable by your web server
-* Point your browser to https://path/to/mantisbt/admin/check/index.php to ensure
-  that your webserver is compatible with MantisBT and configured correctly
-* Point your browser to https://path/to/mantisbt/admin/install.php to begin the
-  database installation process
-* Select the database type and enter the credentials to access the database
-* Click install/upgrade
-* Installation is complete -- you may need to copy the default configuration
-  to `mantisbt/config/config_inc.php` if your web server does not have write access
-* Remove the `admin` directory from within the MantisBT installation path. The
-  scripts within this directory should not be accessible on a live MantisBT
-  site or on any installation that is accessible via the Internet.
+```bash
+git clone https://github.com/nashid/mantisbt.git
+cd mantisbt
+```
 
-UPGRADING
----------
+- Install Dependencies
+```bash
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+composer install
+```
 
-* Backup your existing installation and database -- really!
-* Extract the tarball into a clean directory; do not extract into an existing
-  installation, as some files have been moved or deleted between releases
-* Copy your configuration from the old installation to the new directory,
-  including `config_inc.php`, `custom_strings_inc.php`, `custom_relationships_inc.php`,
-  `custom_functions_inc.php` and `custom_constants_inc.php` if they exist
-* Point your browser to https://path/to/mantisbt/admin/check/index.php to ensure that
-  your webserver is compatible with MantisBT and configured correctly
-* Point your browser to https://path/to/mantisbt/admin/install.php to upgrade
-  the database schema
-* Click install/upgrade
-* Remove the `admin` directory from within the MantisBT installation path. The
-  scripts within this directory should not be accessible on a live MantisBT
-  site or on any installation that is accessible via the Internet.
-* Upgrading is complete
+- Set Permissions
+```bash
+sudo chown -R _www:_www /path/to/your/webroot/mantisbt
+sudo chmod -R 755 /path/to/your/webroot/mantisbt
+sudo chmod -R 777 /path/to/your/webroot/mantisbt/config
+sudo chmod -R 777 /path/to/your/webroot/mantisbt/core
+sudo chmod -R 777 /path/to/your/webroot/mantisbt/lang
+sudo chmod -R 777 /path/to/your/webroot/mantisbt/plugins
+sudo chmod -R 777 /path/to/your/webroot/mantisbt/uploads
+```
 
-CONFIGURATION
--------------
+## Step 6: Configure Apache
+- Edit Apache Configuration
 
-This file contains information to help you customize MantisBT.  A more
-detailed doc can be found at https://www.mantisbt.org/docs/
+```bash
+subl /opt/homebrew/etc/httpd/httpd.conf
+```
 
-* `config_defaults_inc.php`
-  * this file contains the default values for all the site-wide variables.
-* `config/config_inc.php`
-  * You should use this file to change config variable values.  Your
-    values from this file will be used instead of the defaults.  This file
-    will not be overwritten when you upgrade, but config_defaults_inc.php will.
-    Look at `config/config_inc.php.sample` for an example.
+- Ensure you have the following lines to load PHP module and include virtual hosts:
+```bash
+LoadModule php_module /opt/homebrew/opt/php/lib/httpd/modules/libphp.so
 
-* `core/*_api.php` - these files contains all the API library functions.
+<IfModule php_module>
+    AddType application/x-httpd-php .php
+    DirectoryIndex index.php
+</IfModule>
 
-* global variables are prefixed by `g_`
-* parameters in functions are prefixed with `p_` -- parameters shouldn't be modified within the function.
-* form variables are prefixed with `f_`
-* variables that have been cleaned for db insertiong are prefixed with `c_`
-* temporary variables are prefixed with `t_`.
-* count variables have the word `count` in the variable name
+Include /opt/homebrew/etc/httpd/extra/httpd-vhosts.conf
+```
 
-More detail can be seen in the coding guidelines at:
-https://www.mantisbt.org/guidelines.php
+```
+<Directory "/Users/nashid/repos/mantisbt">
+Options Indexes FollowSymLinks
+AllowOverride All
+Require all granted
+</Directory>
+```
 
-* The files are split into three basic categories, viewable pages,
-  include files and pure scripts. Examining the viewable pages (suffix `_page`)
-  should make the basic file format fairly easy to see.  The file names
-  themselves should make their purpose apparent.  The approach used is to break the
-  work into many small files rather than have a small number of really
-  large files.
+- Configure Virtual Host
+```bash
+nano /opt/homebrew/etc/httpd/extra/httpd-vhosts.conf
+```
 
-* You can set `$g_top_include_page` and `$g_bottom_include_page`
-  to alter what should be visible at the top and bottom of each page.
+Add the following virtual host configuration:
+```bash
+<VirtualHost *:8080>
+    ServerAdmin admin@example.com
+    DocumentRoot "/Users/nashid/repos/mantisbt"
+    ServerName mantisbt.local
 
-* All files were edited with TAB SPACES set to 4.
+    <Directory "/Users/nashid/repos/mantisbt">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog "/opt/homebrew/var/log/httpd/mantisbt_error.log"
+    CustomLog "/opt/homebrew/var/log/httpd/mantisbt_access.log" common
+</VirtualHost>
+```
+
+Restart Daemons
+```bash
+sudo apachectl restart
+/opt/homebrew/opt/httpd/bin/httpd -D FOREGROUND # run httpd in foreground to see the logs
+```
+
+## Step 7: Complete MantisBT Installation
+- Open the MantisBT installation page in your browser:
+
+```bash
+http://mantisbt.local:8080/admin/install.php
+```
+
+- Click "Install/Upgrade Database" and follow the on-screen instructions.
+
+## Step 8: Log In to MantisBT
+
+```bash
+http://mantisbt.local:8080
+```
+
+
+
