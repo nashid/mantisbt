@@ -143,5 +143,9 @@ http://mantisbt.local:8080/admin/install.php
 http://mantisbt.local:8080
 ```
 
-
+Application logs will be written here:
+```
+tail -f /opt/homebrew/var/log/httpd/mantisbt_error.log
+tail -f /opt/homebrew/var/log/httpd/mantisbt_error.log
+```
 
