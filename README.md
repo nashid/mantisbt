@@ -111,7 +111,18 @@ Add the following virtual host configuration:
 </VirtualHost>
 ```
 
-Restart Daemons
+- Edit /etc/hosts File
+Edit the /etc/hosts file to resolve mantisbt.local to localhost:
+```bash
+subl /etc/hosts
+```
+
+Add the following line at the end of the file:
+```
+127.0.0.1   mantisbt.local
+```
+
+- Restart Daemons
 ```bash
 sudo apachectl restart
 /opt/homebrew/opt/httpd/bin/httpd -D FOREGROUND # run httpd in foreground to see the logs
