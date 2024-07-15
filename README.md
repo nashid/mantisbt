@@ -34,7 +34,7 @@ GRANT ALL PRIVILEGES ON mantisbt.* TO 'mantisbt_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-## Step 4: Set Up MySQL
+## Step 4: Clone Repository
 
 - Clone MantisBT Repository
 
